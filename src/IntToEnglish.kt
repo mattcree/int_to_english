@@ -1,5 +1,6 @@
 import java.text.NumberFormat
 import java.util.*
+import kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf
 
 class IntToEnglish : IntToWords {
 
@@ -32,7 +33,7 @@ class IntToEnglish : IntToWords {
         if(clusters.size == 1)
             return trim(processNumberPair(clusters.first(), "standard"))
 
-        return numberToWords(clusters)
+        return processClusters(clusters)
     }
 
 // ----------------------------------------------------------------------------
@@ -42,7 +43,9 @@ class IntToEnglish : IntToWords {
 // ----------------------------------------------------------------------------
 
     companion object {
-        val digitsAndTeensTable = hashMapOf(
+        // The tables used to do the mapping between integers
+        // and their English counterparts
+        private val digitsAndTeensTable = hashMapOf(
                 0 to "",
                 1 to "one",
                 2 to "two",
@@ -64,7 +67,7 @@ class IntToEnglish : IntToWords {
                 18 to "eighteen",
                 19 to "nineteen"
         )
-        val tensTable = hashMapOf(
+        private val tensTable = hashMapOf(
                 20 to "twenty",
                 30 to "thirty",
                 40 to "forty",
@@ -74,7 +77,9 @@ class IntToEnglish : IntToWords {
                 80 to "eighty",
                 90 to "ninety"
         )
-        val magnitudeTable = hashMapOf(
+        // TODO: find a better way to do this rather than hardcoding commas and formatting
+        // details
+        private val magnitudeTable = hashMapOf(
                 1 to "",
                 2 to " thousand, ",
                 3 to " million, ",
@@ -87,7 +92,7 @@ class IntToEnglish : IntToWords {
 // Number Pairs/Clusters
 // ----------------------------------------------------------------------------
 
-    fun toNumberPair(num: Int): Pair<Int, Int> {
+    private fun toNumberPair(num: Int): Pair<Int, Int> {
         val tens = num % 100
         val hundreds = (num - tens) / 100
         return Pair(hundreds, tens)
@@ -97,7 +102,7 @@ class IntToEnglish : IntToWords {
 // Number Pairs/Clusters to String Representation
 // ----------------------------------------------------------------------------
 
-    fun numberToWords(clusterList: List<Pair<Int, Int>>): String {
+    private fun processClusters(clusterList: List<Pair<Int, Int>>): String {
         // The String Builder which will be the return value
         val stringBuilder = StringBuilder(150)
         var magnitudes = clusterList.size
@@ -113,7 +118,7 @@ class IntToEnglish : IntToWords {
         return trim(stringBuilder.toString())
     }
 
-    fun processNumberPair(numPair: Pair<Int, Int>, mode: String): String {
+    private fun processNumberPair(numPair: Pair<Int, Int>, mode: String): String {
         if(isEmptyNumPair(numPair))
             return ""
         when(mode == "trailing") {
@@ -122,55 +127,69 @@ class IntToEnglish : IntToWords {
         }
     }
 
-    fun processNumberPairStandard(numPair: Pair<Int, Int>): String {
-        val first = numPair.first
-        val second = numPair.second
-        if(first == 0)
-            return processSecondNumber(second)
-        if(second == 0)
-            return processFirstNumber(first) + " hundred "
-        return concatPair(numPair)
+    private fun processNumberPairStandard(numPair: Pair<Int, Int>): String {
+        if(numPair.first == 0)
+            return secondNumber(numPair)
+        if(numPair.second == 0)
+            return firstNumber(numPair)
+        return bothNumbers(numPair)
     }
 
-    fun processNumberPairTrailing(numPair: Pair<Int, Int>): String {
-        val first = numPair.first
-        val second = numPair.second
-        if (first == 0)
-            return "and " + processSecondNumber(second)
-        if (second == 0)
-            return processFirstNumber(first) + " hundred "
-        return concatPair(numPair)
+    private fun processNumberPairTrailing(numPair: Pair<Int, Int>): String {
+        if (numPair.first == 0)
+            return secondNumberTrailing(numPair)
+        if (numPair.second == 0)
+            return firstNumber(numPair)
+        return bothNumbers(numPair)
     }
-
-
 
 // ----------------------------------------------------------------------------
-// One Digit Numbers to String
+// Processing Numbers
 // ----------------------------------------------------------------------------
 
     // Converting single digit number to a String
-    fun processFirstNumber(num: Int): String {
+    private fun processFirstNumber(num: Int): String {
         if(num > 0)
             return oneDigitNumberToString(num)
         return ""
     }
 
-    fun oneDigitNumberToString(num: Int): String {
-        return digitsAndTeensTable[num]!!
+    // Converting (up to) a two digit number to a String
+    private fun processSecondNumber(num: Int): String {
+        if(num > 0)
+            return twoDigitNumberToString(num)
+        return ""
+    }
+
+// ----------------------------------------------------------------------------
+// Formatting of Numbers with Special Cases
+// ----------------------------------------------------------------------------
+
+    private fun firstNumber(numPair: Pair<Int, Int>): String {
+        return processFirstNumber(numPair.first) + " hundred "
+    }
+
+    private fun secondNumber(numPair: Pair<Int, Int>): String {
+        return processSecondNumber(numPair.second)
+    }
+
+    private fun secondNumberTrailing(numPair: Pair<Int, Int>): String {
+        return "and " + processSecondNumber(numPair.second)
+    }
+
+    private fun bothNumbers(numPair: Pair<Int, Int>): String {
+        return processFirstNumber(numPair.first) + " hundred and " + processSecondNumber(numPair.second)
     }
 
 // ----------------------------------------------------------------------------
 // Two Digit Numbers to String
 // ----------------------------------------------------------------------------
 
-    // Converting (up to) a two digit number to a String
-    fun processSecondNumber(num: Int): String {
-        if(num > 0)
-            return twoDigitNumberToString(num)
-        return ""
+    private fun oneDigitNumberToString(num: Int): String {
+        return digitsAndTeensTable[num]!!
     }
 
-    fun twoDigitNumberToString(num: Int): String {
+    private fun twoDigitNumberToString(num: Int): String {
         if(num < 20) return digitsAndTeensTable[num]!!
         val leastSignificantDigit = num % 10
         val mostSignificantDigit = num - leastSignificantDigit
@@ -184,17 +203,17 @@ class IntToEnglish : IntToWords {
     // Produces a list of Pairs of the form Pair(<Hundred Value>, <Rest>) i.e. 199 -> (1, 99)
     // This data structure allows for easy conversion to more natural English patterns
     // for example, (1, 99) -> one hundred -- and -- ninety nine
-    fun intToNumberPairs(num: Int): List<Pair<Int, Int>> {
+    private fun intToNumberPairs(num: Int): List<Pair<Int, Int>> {
         return intToClusters(num).map {toNumberPair(it)}
     }
 
     // Splits the Number String into a list of Int clusters < 999 i.e. '1,234,567' -> [1, 234, 567]
-    fun intToClusters(num: Int): List<Int> {
+    private fun intToClusters(num: Int): List<Int> {
         return formattedIntString(num).split(',').map {Integer.parseInt(it)}
     }
 
     // Converts the Integer to a String with comma delimiters i.e. 1234567 -> '1,234,567'
-    fun formattedIntString(num: Int): String {
+    private fun formattedIntString(num: Int): String {
         return NumberFormat.getNumberInstance(Locale.US).format(num)
     }
 
@@ -202,15 +221,12 @@ class IntToEnglish : IntToWords {
 // Helpers
 // ----------------------------------------------------------------------------
 
-    fun concatPair(numPair: Pair<Int, Int>): String {
-        return processFirstNumber(numPair.first) + " hundred and " + processSecondNumber(numPair.second)
-    }
 
-    fun trim(str: String): String {
+    private fun trim(str: String): String {
         return str.trim {it <= ' ' || it <= ','}
     }
 
-    fun isEmptyNumPair(numPair: Pair<Int, Int>): Boolean {
+    private fun isEmptyNumPair(numPair: Pair<Int, Int>): Boolean {
         return if(numPair.first == 0 && numPair.second == 0) true else false
     }
 }

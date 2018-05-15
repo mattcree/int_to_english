@@ -1,9 +1,8 @@
 
 
 fun main(args : Array<String>) {
-    if (args.size == 0) {
-        println("Please provide an integer value")
-        return
+    val converter = IntToEnglish()
+    for (number in 1..9999) {
+        println(converter.convert(number))
     }
-    println("Hello, ${args[0]}!")
 }
