@@ -31,7 +31,7 @@ Dependencies
 
 ## Running as a JAR 
 
-- From the command line
+- From the command line when inside the InstilCodeTest (top) directory
 > $ java -jar InstilCodeTest.jar
 
 ## Caveats/Assumptions
