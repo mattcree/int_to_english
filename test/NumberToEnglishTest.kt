@@ -124,5 +124,88 @@ class NumberToEnglishTest {
         assertEquals(expected, actual)
     }
 
+    //Testing Internal Functions
+    //Int to Clusters Tests
+    @Test
+    fun testGetClustersWithSixDigitNumberShouldReturnListOfPairs() {
+        val first = Pair(9, 99)
+        val second = Pair(8, 88)
+        val expected = listOf(first, second)
+        val actual = converter.getClusters(999888)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun testGetClustersWhenZeroShouldReturnZeroPair() {
+        val first = Pair(0, 0)
+        val expected = listOf(first)
+        val actual = converter.getClusters(0)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun testIntToClustersShouldReturnNumberAsClusters() {
+        val expected = listOf(99, 888)
+        val actual = converter.intToClusters(99888)
+        assertEquals(expected, actual)
+    }
+
+    //Testing 'to String' logic
+    @Test
+    fun testOneDigitNumberToStringShouldReturnNine() {
+        val expected = "nine"
+        val actual = converter.twoDigitNumberToString(9)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun testTwoDigitNumbertoStringWhenLessThanTwentyShouldReturnNineteen() {
+        val expected = "nineteen"
+        val actual = converter.twoDigitNumberToString(19)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun testTwoDigitNumbertoStringWhenGreaterThanTwentyShouldFortyThree() {
+        val expected = "forty three"
+        val actual = converter.twoDigitNumberToString(43)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun testFormattedStringReturnsStringWithCommas() {
+        val expected = "1,234,567"
+        val actual = converter.formattedIntString(1234567)
+        assertEquals(expected, actual)
+    }
+
+    //Processing the Numbers
+    @Test
+    fun testProcessFirstNumberWhenZeroShouldReturnEmptyString() {
+        val expected = ""
+        val actual = converter.processFirstNumber(0)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun testProcessSecondNumberWhenZeroShouldReturnEmptyString() {
+        val expected = ""
+        val actual = converter.processSecondNumber(0)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun testProcessFirstNumberWhenGreaterThanZeroShouldReturnNumber() {
+        val expected = "six"
+        val actual = converter.processFirstNumber(6)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun testProcessSecondNumberWhenGreaterThanZeroShouldReturnNumber() {
+        val expected = "eighty eight"
+        val actual = converter.processSecondNumber(88)
+        assertEquals(expected, actual)
+    }
 }
 
