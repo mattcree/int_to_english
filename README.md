@@ -3,9 +3,6 @@
 
 ## Description
 
-> As a man of limited counting prowess, I want a program which will print out the numbers from 1 to 9999 as words, so that I can use it for reference when I need to do my super basic accounts
-
-
 *Int to English* can print all numbers as words from 1 to 9999 in ascending order with each number on a new line. 
 
 ## Output Format 
